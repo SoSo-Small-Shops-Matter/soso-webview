@@ -7,8 +7,7 @@ import { PERMISSIONS, RESULTS, check } from 'react-native-permissions'
 import { ShouldStartLoadRequest } from 'react-native-webview/lib/WebViewTypes'
 import { GoogleSignin } from '@react-native-google-signin/google-signin'
 
-// const url = true ? 'http://localhost:3000' : 'https://soso-client-soso-web.vercel.app/'
-const url = 'http://192.168.219.101:3000'
+const url = 'https://soso-client-soso-web.vercel.app/'
 
 const App = () => {
   const webviewRef = useRef<WebView>(null)
@@ -41,8 +40,8 @@ const App = () => {
     }
   }
 
-  const onRequestLocation = () => {
-    if (!getIsLocationEnabled()) {
+  const onRequestLocation = async () => {
+    if (!(await getIsLocationEnabled())) {
       return
     }
     Geolocation.getCurrentPosition(
@@ -50,23 +49,25 @@ const App = () => {
       (error) => {
         console.error('위치 정보 가져오기 실패:', error)
       },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+      { enableHighAccuracy: false, timeout: 15000, maximumAge: 10000 }
     )
   }
 
   const onReuestGoogleLogin = async () => {
     try {
       await GoogleSignin.hasPlayServices()
-      const userInfo = await GoogleSignin.signIn({})
-      const idToken = userInfo.data?.idToken
+      const data = await GoogleSignin.signIn()
 
-      // 웹에 토큰 전달
-      const jsCode = `
+      const code = data.data?.serverAuthCode
+      if (code) {
+        // 웹에 토큰 전달
+        const jsCode = `
         window.dispatchEvent(new CustomEvent("google-login-success", {
-          detail: ${JSON.stringify(idToken)}
+          detail: ${JSON.stringify({ code })}
         }));
       `
-      webviewRef.current?.injectJavaScript(jsCode)
+        webviewRef.current?.injectJavaScript(jsCode)
+      }
     } catch (e) {
       console.error('구글 로그인 실패:', e)
     }
@@ -86,7 +87,7 @@ const App = () => {
 
   const postInitLocation = (position: GeolocationResponse) => {
     const jsCode = `
-        window.dispatchEvent(new CustomEvent('native-init-location', {
+        window.dispatchEvent(new CustomEvent('init-native-location', {
           detail: {
             lat: ${position.coords.latitude},
             lng: ${position.coords.longitude}
@@ -94,11 +95,11 @@ const App = () => {
         }));
       `
     webviewRef.current?.injectJavaScript(jsCode)
+    console.log('initdone')
   }
 
   const getIsLocationEnabled = async () => {
     const result = await check(PERMISSIONS.IOS.LOCATION_WHEN_IN_USE)
-
     switch (result) {
       case RESULTS.UNAVAILABLE:
         Alert.alert('이 기기에서는 위치 권한을 사용할 수 없습니다.', '', [{ text: 'OK' }])
@@ -112,23 +113,28 @@ const App = () => {
     }
   }
 
-  const handleWebViewLoad = () => {
-    if (!getIsLocationEnabled()) {
-      return
+  const handleWebViewLoad = async () => {
+    try {
+      if (!(await getIsLocationEnabled())) {
+        return
+      }
+      Geolocation.getCurrentPosition(
+        postInitLocation,
+        (error) => {
+          console.error('위치 정보 가져오기 실패:', error)
+        },
+        { enableHighAccuracy: false, timeout: 15000, maximumAge: 10000 }
+      )
+    } catch (error) {
+      console.error('위치 정보 가져오기 실패:', error)
     }
-    Geolocation.getCurrentPosition(
-      postInitLocation,
-      (error) => {
-        console.error(error)
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-    )
   }
 
   const googleSigninConfigure = () => {
     GoogleSignin.configure({
       webClientId: '960396512352-8grg1jmhbuslibdo8pimvos947fc0nm6.apps.googleusercontent.com',
-      // iosClientId: 'ios클라이언트 아이디', //파이어베이스 서버 이용을 안할경우 필요한듯
+      iosClientId: '960396512352-efrhq9liit6uk2ma63ddg79hti8n16e7.apps.googleusercontent.com',
+      offlineAccess: true,
     })
   }
 
