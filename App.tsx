@@ -114,20 +114,16 @@ const App = () => {
   }
 
   const handleWebViewLoad = async () => {
-    try {
-      if (!(await getIsLocationEnabled())) {
-        return
-      }
-      Geolocation.getCurrentPosition(
-        postInitLocation,
-        (error) => {
-          console.error('위치 정보 가져오기 실패:', error)
-        },
-        { enableHighAccuracy: false, timeout: 15000, maximumAge: 10000 }
-      )
-    } catch (error) {
-      console.error('위치 정보 가져오기 실패:', error)
+    if (!(await getIsLocationEnabled())) {
+      return
     }
+    Geolocation.getCurrentPosition(
+      postInitLocation,
+      (error) => {
+        console.error('위치 정보 가져오기 실패:', error)
+      },
+      { enableHighAccuracy: false, timeout: 15000, maximumAge: 10000 }
+    )
   }
 
   const googleSigninConfigure = () => {

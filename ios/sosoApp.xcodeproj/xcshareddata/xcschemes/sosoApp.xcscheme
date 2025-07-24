@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "sosoApp.app"
+               BuildableName = "soso.app"
                BlueprintName = "sosoApp"
                ReferencedContainer = "container:sosoApp.xcodeproj">
             </BuildableReference>
@@ -55,7 +55,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "sosoApp.app"
+            BuildableName = "soso.app"
             BlueprintName = "sosoApp"
             ReferencedContainer = "container:sosoApp.xcodeproj">
          </BuildableReference>
@@ -76,7 +76,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "sosoApp.app"
+            BuildableName = "soso.app"
             BlueprintName = "sosoApp"
             ReferencedContainer = "container:sosoApp.xcodeproj">
          </BuildableReference>
