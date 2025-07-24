@@ -277,7 +277,7 @@
 					"-lc++",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.soso.sosoapp;
-				PRODUCT_NAME = sosoApp;
+				PRODUCT_NAME = soso;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -305,7 +305,7 @@
 					"-lc++",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.soso.sosoapp;
-				PRODUCT_NAME = sosoApp;
+				PRODUCT_NAME = soso;
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
