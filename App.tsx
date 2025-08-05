@@ -30,10 +30,12 @@ const App = () => {
       const data = JSON.parse(event.nativeEvent.data)
       if (data.type === 'REQUEST_LOCATION') {
         onRequestLocation()
+        return
       }
 
       if (data.type === 'GOOGLE_LOGIN_REQUEST') {
         onReuestGoogleLogin()
+        return
       }
     } catch (e) {
       console.error('onMessage 처리 중 에러:', e)
@@ -95,7 +97,6 @@ const App = () => {
         }));
       `
     webviewRef.current?.injectJavaScript(jsCode)
-    console.log('initdone')
   }
 
   const getIsLocationEnabled = async () => {
@@ -106,7 +107,6 @@ const App = () => {
         break
       case RESULTS.DENIED:
       case RESULTS.BLOCKED:
-        Linking.openSettings()
         break
       case RESULTS.GRANTED:
         return result
@@ -155,6 +155,7 @@ const App = () => {
     <SafeAreaView style={styles.container}>
       <StatusBar />
       <WebView
+        scrollEnabled={false}
         ref={webviewRef}
         onShouldStartLoadWithRequest={handleRequest}
         source={{ uri: url }}
