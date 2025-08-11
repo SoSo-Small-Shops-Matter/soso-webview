@@ -6,6 +6,7 @@ import Geolocation, { GeolocationResponse } from '@react-native-community/geoloc
 import { PERMISSIONS, RESULTS, check } from 'react-native-permissions'
 import { ShouldStartLoadRequest } from 'react-native-webview/lib/WebViewTypes'
 import { GoogleSignin } from '@react-native-google-signin/google-signin'
+import { appleAuth } from '@invertase/react-native-apple-authentication'
 
 const url = 'https://soso-client-soso-web.vercel.app/'
 
@@ -34,7 +35,12 @@ const App = () => {
       }
 
       if (data.type === 'GOOGLE_LOGIN_REQUEST') {
-        onReuestGoogleLogin()
+        onRequestGoogleLogin()
+        return
+      }
+
+      if (data.type === 'APPLE_LOGIN_REQUEST') {
+        onRequestAppleLogin()
         return
       }
     } catch (e) {
@@ -55,7 +61,7 @@ const App = () => {
     )
   }
 
-  const onReuestGoogleLogin = async () => {
+  const onRequestGoogleLogin = async () => {
     try {
       await GoogleSignin.hasPlayServices()
       const data = await GoogleSignin.signIn()
@@ -72,6 +78,38 @@ const App = () => {
       }
     } catch (e) {
       console.error('구글 로그인 실패:', e)
+    }
+  }
+
+  const onRequestAppleLogin = async () => {
+    try {
+      // performs login request
+      const appleAuthRequestResponse = await appleAuth.performRequest({
+        requestedOperation: appleAuth.Operation.LOGIN,
+        // Note: it appears putting FULL_NAME first is important, see issue #293
+        requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
+      })
+
+      const { identityToken } = appleAuthRequestResponse
+      // get current authentication state for user
+      // /!\ This method must be tested on a real device. On the iOS simulator it always throws an error.
+      const credentialState = await appleAuth.getCredentialStateForUser(appleAuthRequestResponse.user)
+      if (credentialState !== appleAuth.State.AUTHORIZED) {
+        // user is not authenticated
+        return
+      }
+
+      if (identityToken) {
+        // 웹에 토큰 전달
+        const jsCode = `
+        window.dispatchEvent(new CustomEvent("apple-login-success", {
+          detail: ${JSON.stringify({ idToken: identityToken })}
+        }));
+      `
+        webviewRef.current?.injectJavaScript(jsCode)
+      }
+    } catch (error) {
+      console.error('애플 로그인 실패:', error)
     }
   }
 
