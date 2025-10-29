@@ -7,8 +7,14 @@ import { PERMISSIONS, RESULTS, check } from 'react-native-permissions'
 import { ShouldStartLoadRequest } from 'react-native-webview/lib/WebViewTypes'
 import { GoogleSignin } from '@react-native-google-signin/google-signin'
 import { appleAuth } from '@invertase/react-native-apple-authentication'
+import * as amplitude from '@amplitude/analytics-react-native'
+import { init } from '@amplitude/analytics-react-native'
+import Config from 'react-native-config'
+import { ReceivedMessage, SentMessageType } from './src/types'
 
-const url = 'https://soso-client-soso-web.vercel.app/'
+const AMPLITUDE_API_KEY = Config.AMPLITUDE_API_KEY || ''
+
+const url = Config.SOSO_WEB_URL || ''
 
 const App = () => {
   const webviewRef = useRef<WebView>(null)
@@ -17,124 +23,112 @@ const App = () => {
   const handleRequest = (webViewRequest: ShouldStartLoadRequest) => {
     const isExternal = !webViewRequest.url.startsWith(url)
     if (isExternal) {
-      Linking.openURL(webViewRequest.url) // Safari or Chrome
-      return false // Prevent WebView from loading it
+      Linking.openURL(webViewRequest.url)
+      return false
     }
-    return true // Allow internal URLs
+    return true
   }
 
+  const sendMessageToWeb = (type: SentMessageType, payload: any) => {
+    const message = JSON.stringify({ type, payload })
+    for (let i = 0; i < 3; i++) {
+      setTimeout(() => {
+        webviewRef.current?.postMessage(message)
+      }, i * 300)
+    }
+  }
   const onMessage = async (event: WebViewMessageEvent) => {
-    const msg = JSON.parse(event.nativeEvent.data)
-    console.log('[WebView console.log]:', msg.log)
-
     try {
-      const data = JSON.parse(event.nativeEvent.data)
+      const data: ReceivedMessage = JSON.parse(event.nativeEvent.data)
+      amplitude.track('Message Received', { type: data.type })
+
       if (data.type === 'REQUEST_LOCATION') {
         onRequestLocation()
         return
       }
-
       if (data.type === 'GOOGLE_LOGIN_REQUEST') {
         onRequestGoogleLogin()
         return
       }
-
       if (data.type === 'APPLE_LOGIN_REQUEST') {
         onRequestAppleLogin()
         return
       }
     } catch (e) {
       console.error('onMessage 처리 중 에러:', e)
+      amplitude.track('On Message Error', { error: (e as Error).message })
     }
   }
 
   const onRequestLocation = async () => {
-    if (!(await getIsLocationEnabled())) {
-      return
-    }
+    if (!(await getIsLocationEnabled())) return
     Geolocation.getCurrentPosition(
       postCurrentLocation,
       (error) => {
         console.error('위치 정보 가져오기 실패:', error)
+        amplitude.track('Get Location Error', { error: error.message })
       },
       { enableHighAccuracy: false, timeout: 15000, maximumAge: 10000 }
     )
   }
 
   const onRequestGoogleLogin = async () => {
+    amplitude.track('Login Google Request')
+
     try {
       await GoogleSignin.hasPlayServices()
       const data = await GoogleSignin.signIn()
-
       const code = data.data?.serverAuthCode
+
       if (code) {
-        // 웹에 토큰 전달
-        const jsCode = `
-        window.dispatchEvent(new CustomEvent("google-login-success", {
-          detail: ${JSON.stringify({ code })}
-        }));
-      `
-        webviewRef.current?.injectJavaScript(jsCode)
+        amplitude.track('Login Google Success')
+        sendMessageToWeb('GOOGLE_LOGIN_SUCCESS', { code })
       }
     } catch (e) {
       console.error('구글 로그인 실패:', e)
+      amplitude.track('Login Google Error', { error: (e as Error).message })
+      sendMessageToWeb('GOOGLE_LOGIN_ERROR', { message: (e as Error).message })
     }
   }
 
   const onRequestAppleLogin = async () => {
+    amplitude.track('Login Apple Request')
+
     try {
-      // performs login request
       const appleAuthRequestResponse = await appleAuth.performRequest({
         requestedOperation: appleAuth.Operation.LOGIN,
-        // Note: it appears putting FULL_NAME first is important, see issue #293
         requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
       })
 
       const { identityToken } = appleAuthRequestResponse
-      // get current authentication state for user
-      // /!\ This method must be tested on a real device. On the iOS simulator it always throws an error.
       const credentialState = await appleAuth.getCredentialStateForUser(appleAuthRequestResponse.user)
-      if (credentialState !== appleAuth.State.AUTHORIZED) {
-        // user is not authenticated
-        return
-      }
 
+      amplitude.track('Login Apple CredentialState', { credentialState, identityToken: !!identityToken })
+
+      if (credentialState !== appleAuth.State.AUTHORIZED) return
       if (identityToken) {
-        // 웹에 토큰 전달
-        const jsCode = `
-        window.dispatchEvent(new CustomEvent("apple-login-success", {
-          detail: ${JSON.stringify({ idToken: identityToken })}
-        }));
-      `
-        webviewRef.current?.injectJavaScript(jsCode)
+        sendMessageToWeb('APPLE_LOGIN_SUCCESS', { idToken: identityToken })
+        amplitude.track('Login Apple Success')
       }
     } catch (error) {
       console.error('애플 로그인 실패:', error)
+      amplitude.track('Login Apple Error', { error: (error as Error).message })
+      sendMessageToWeb('APPLE_LOGIN_ERROR', { message: (error as Error).message })
     }
   }
 
   const postCurrentLocation = (position: GeolocationResponse) => {
-    const jsCode = `
-            window.dispatchEvent(new CustomEvent('native-location', {
-              detail: {
-                lat: ${position.coords.latitude},
-                lng: ${position.coords.longitude}
-              }
-            }));
-          `
-    webviewRef.current?.injectJavaScript(jsCode)
+    sendMessageToWeb('NATIVE_LOCATION', {
+      lat: position.coords.latitude,
+      lng: position.coords.longitude,
+    })
   }
 
   const postInitLocation = (position: GeolocationResponse) => {
-    const jsCode = `
-        window.dispatchEvent(new CustomEvent('init-native-location', {
-          detail: {
-            lat: ${position.coords.latitude},
-            lng: ${position.coords.longitude}
-          }
-        }));
-      `
-    webviewRef.current?.injectJavaScript(jsCode)
+    sendMessageToWeb('INIT_NATIVE_LOCATION', {
+      lat: position.coords.latitude,
+      lng: position.coords.longitude,
+    })
   }
 
   const getIsLocationEnabled = async () => {
@@ -152,41 +146,39 @@ const App = () => {
   }
 
   const handleWebViewLoad = async () => {
-    if (!(await getIsLocationEnabled())) {
-      return
-    }
-    Geolocation.getCurrentPosition(
-      postInitLocation,
-      (error) => {
-        console.error('위치 정보 가져오기 실패:', error)
-      },
-      { enableHighAccuracy: false, timeout: 15000, maximumAge: 10000 }
-    )
+    if (!(await getIsLocationEnabled())) return
+    Geolocation.getCurrentPosition(postInitLocation, (error) => console.error('위치 정보 가져오기 실패:', error), {
+      enableHighAccuracy: false,
+      timeout: 15000,
+      maximumAge: 10000,
+    })
   }
 
   const googleSigninConfigure = () => {
     GoogleSignin.configure({
-      webClientId: '960396512352-8grg1jmhbuslibdo8pimvos947fc0nm6.apps.googleusercontent.com',
-      iosClientId: '960396512352-efrhq9liit6uk2ma63ddg79hti8n16e7.apps.googleusercontent.com',
+      webClientId: Config.GOOGLE_SIGN_IN_WEB_CLIENT_ID,
+      iosClientId: Config.GOOGLE_SIGN_IN_IOS_CLIENT_ID,
       offlineAccess: true,
     })
+  }
+
+  const initAmplitude = () => {
+    init(AMPLITUDE_API_KEY, undefined, { disableCookies: true })
   }
 
   useEffect(() => {
     const handleChange = (nextAppState: AppStateStatus) => {
       if (appState.match(/inactive|background/) && nextAppState === 'active') {
-        // 앱이 다시 활성화되면 웹뷰 새로고침
-        if (webviewRef.current) {
-          webviewRef.current.reload()
-        }
+        webviewRef.current?.reload()
       }
       setAppState(nextAppState)
     }
-    const subscription = AppState.addEventListener('change', handleChange)
+    initAmplitude()
     googleSigninConfigure()
-    return () => {
-      subscription.remove()
-    }
+
+    const subscription = AppState.addEventListener('change', handleChange)
+
+    return () => subscription.remove()
   }, [])
 
   return (
@@ -197,12 +189,13 @@ const App = () => {
         ref={webviewRef}
         onShouldStartLoadWithRequest={handleRequest}
         source={{ uri: url }}
-        javaScriptEnabled={true} // ✅ JavaScript 활성화
-        domStorageEnabled={true} // ✅ DOM Storage 활성화
-        allowUniversalAccessFromFileURLs={true} // ✅ 외부 리소스 접근 허용
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        allowUniversalAccessFromFileURLs={true}
         onLoadEnd={handleWebViewLoad}
+        onMessage={onMessage}
+        bounces={false} // iOS에서 스크롤 바운스 효과 제거
         injectedJavaScriptBeforeContentLoaded={`
-                window.isNativeApp = true;
     window.originalConsoleLog = console.log;
     console.log = function(...args) {
       window.ReactNativeWebView.postMessage(JSON.stringify({ log: args }));
@@ -210,7 +203,6 @@ const App = () => {
     };
     true;
   `}
-        onMessage={onMessage}
         userAgent="Mozilla/5.0 (Linux; Android 10; SM-G975F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Mobile Safari/537.36"
       />
     </SafeAreaView>
