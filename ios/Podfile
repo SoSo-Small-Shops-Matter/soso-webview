@@ -15,6 +15,7 @@ prepare_react_native_project!
 
 setup_permissions([
   'LocationWhenInUse',
+  'Camera'
 ])
 
 linkage = ENV['USE_FRAMEWORKS']
@@ -24,7 +25,12 @@ if linkage != nil
 end
 
 target 'sosoApp' do
+
+  $RNFirebaseAsStaticFramework = true 
+  use_frameworks! :linkage => :static
+
   config = use_native_modules!
+
 
   use_react_native!(
     :path => config[:reactNativePath],

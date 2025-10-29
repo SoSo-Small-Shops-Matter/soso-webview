@@ -10,11 +10,18 @@
     "test": "jest"
   },
   "dependencies": {
+    "@amplitude/analytics-react-native": "^1.5.15",
+    "@amplitude/plugin-session-replay-react-native": "^0.4.3",
     "@invertase/react-native-apple-authentication": "^2.4.1",
+    "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-native-community/geolocation": "^3.4.0",
+    "@react-native-firebase/analytics": "^23.4.0",
+    "@react-native-firebase/app": "^23.3.1",
+    "@react-native-firebase/crashlytics": "^23.3.1",
     "@react-native-google-signin/google-signin": "^15.0.0",
     "react": "19.0.0",
     "react-native": "0.78.0",
+    "react-native-config": "^1.5.9",
     "react-native-inappbrowser-reborn": "^3.7.0",
     "react-native-permissions": "^5.4.1",
     "react-native-safe-area-context": "^5.5.1",
