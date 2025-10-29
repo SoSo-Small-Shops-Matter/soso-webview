@@ -32,7 +32,7 @@
 			</dict>
 		</array>
 		<key>CFBundleVersion</key>
-		<string>100000</string>
+		<string>100004</string>
 		<key>LSRequiresIPhoneOS</key>
 		<true />
 		<key>NSAppTransportSecurity</key>
@@ -54,6 +54,10 @@
 		<string>지도를 표시하기 위해 위치 권한이 필요합니다.</string>
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>지도를 표시하기 위해 위치 권한이 필요합니다.</string>
+		<key>NSCameraUsageDescription</key>
+		<string>프로필 사진 등록 및 게시물 업로드 시 사진을 촬영하거나 앨범에서 선택할 수 있도록 권한이 필요합니다</string>
+		<key>NSApplicationCrashOnExceptions</key>
+		<string>YES</string>
 		<key>UILaunchStoryboardName</key>
 		<string>LaunchScreen</string>
 		<key>UIRequiredDeviceCapabilities</key>
