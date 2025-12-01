@@ -1,97 +1,85 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+## 소품샵은 소중해
 
-# Getting Started
+**감성 인테리어, 선물, 소품샵을 한 번에 찾는 방법\!**  
+ **소소에서 내 주변의 작은 행복을 발견하세요.**
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+### 💡 소개
 
-## Step 1: Start Metro
+이 앱은 웹사이트 ['소품샵은 소중해'](soso-client-soso-web.vercel.app)를 모바일 앱으로 변환한 프로젝트입니다.
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+React Native WebView를 사용하여 웹 컨텐츠를 앱 안에 담고, GPS 위치 정보와 간편 로그인 기능을 네이티브에서 처리하여 웹 경험을 모바일에 최적화했습니다.
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+#### 주요 기능
 
-```sh
-# Using npm
-npm start
+- **위치 기반 소품샵 검색:** 네이티브 GPS 기능을 활용하여 사용자 주변의 소품샵을 찾습니다.
+- **간편 소셜 로그인:** **Google 및 Apple 네이티브 SDK**로 안정적인 로그인 환경을 제공합니다.
+- **웹뷰 컨테이너:** 웹 앱의 모든 기능을 네이티브 환경에서 동일하게 이용할 수 있도록 합니다.
+- **앱 상태 관리:** 앱 재진입(Background -\> Foreground) 시 웹뷰를 자동 새로고침하여 데이터 일관성을 유지합니다.
 
-# OR using Yarn
-yarn start
+---
+
+### ⚙️ 설치 및 실행 (Getting Started)
+
+#### 선행 조건
+
+- Node.js
+- Yarn
+- **네이티브 계정 설정:** Google Sign-In, Apple Sign-In, Amplitude API 키 발급 및 설정
+
+#### 환경 변수 설정
+
+루트 디렉토리에 `.env` 파일을 생성하고 다음 변수를 설정해야 합니다.
+
+```
+# .env
+# 로드할 웹 애플리케이션의 URL
+SOSO_WEB_URL="soso-client-soso-web.vercel.app"
+# Google 로그인 설정
+GOOGLE_SIGN_IN_WEB_CLIENT_ID="[Google Web Client ID]"
+GOOGLE_SIGN_IN_IOS_CLIENT_ID="[Google iOS Client ID]"
+# Amplitude 추적을 위한 API Key
+AMPLITUDE_API_KEY="[Amplitude API Key]"
 ```
 
-## Step 2: Build and run your app
+#### 로컬 설치 및 실행
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+1.  저장소 클론
+2.  종속성 설치
+    ```bash
+    yarn install
+    ```
+3.  앱 실행
+    ```bash
+    yarn ios
+    ```
 
-### Android
+---
 
-```sh
-# Using npm
-npm run android
+### 🤝 네이티브-웹 통신
 
-# OR using Yarn
-yarn android
-```
+앱은 `postMessage`를 사용하여 웹과 네이티브 간에 기능을 요청하고 응답합니다.
 
-### iOS
+#### ➡️ 웹에서 네이티브로 요청 (Received Messages)
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+| `data.type`            | 설명                | 네이티브 동작                             |
+| :--------------------- | :------------------ | :---------------------------------------- |
+| `REQUEST_LOCATION`     | 현재 위치 정보 요청 | 위치 권한 확인 후 GPS 정보 획득           |
+| `GOOGLE_LOGIN_REQUEST` | 구글 로그인 요청    | Google Sign-In SDK 실행 및 인증 코드 획득 |
+| `APPLE_LOGIN_REQUEST`  | 애플 로그인 요청    | Apple Auth SDK 실행 및 ID 토큰 획득       |
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+#### ⬅️ 네이티브에서 웹으로 응답 (Sent Messages)
 
-```sh
-bundle install
-```
+| `type`                 | 설명                           | `payload` 구조 (예시)                 |
+| :--------------------- | :----------------------------- | :------------------------------------ |
+| `NATIVE_LOCATION`      | 위치 정보 요청 성공 응답       | `{ lat: number, lng: number }`        |
+| `INIT_NATIVE_LOCATION` | 앱 로드 시 초기 위치 정보 전송 | `{ lat: number, lng: number }`        |
+| `GOOGLE_LOGIN_SUCCESS` | 구글 로그인 성공               | `{ code: string }` (Server Auth Code) |
+| `APPLE_LOGIN_SUCCESS`  | 애플 로그인 성공               | `{ idToken: string }`                 |
+| `*_LOGIN_ERROR`        | 로그인 실패                    | `{ message: string }`                 |
 
-Then, and every time you update your native dependencies, run:
+---
 
-```sh
-bundle exec pod install
-```
+### 🔗 프로젝트 및 서비스 링크
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
-```
-
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
-
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
-
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+- **웹서비스** : 소품샵은 소중해 ([웹](https://soso-client-soso-web.vercel.app), [GitHub](https://github.com/SoSo-Small-Shops-Matter/soso-client))
+- **앱 다운로드** : [App Store](https://apps.apple.com/kr/app/%EC%86%8C%ED%92%88%EC%83%B5%EC%9D%80-%EC%86%8C%EC%A4%91%ED%95%B4/id6749072385)
