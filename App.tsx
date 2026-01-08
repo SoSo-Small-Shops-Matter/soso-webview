@@ -31,11 +31,7 @@ const App = () => {
 
   const sendMessageToWeb = (type: SentMessageType, payload: any) => {
     const message = JSON.stringify({ type, payload })
-    for (let i = 0; i < 3; i++) {
-      setTimeout(() => {
-        webviewRef.current?.postMessage(message)
-      }, i * 300)
-    }
+    webviewRef.current?.postMessage(message)
   }
   const onMessage = async (event: WebViewMessageEvent) => {
     try {
