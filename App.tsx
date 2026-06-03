@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import WebView, { WebViewMessageEvent } from 'react-native-webview'
-import { Alert, AppState, AppStateStatus, SafeAreaView, StatusBar, StyleSheet } from 'react-native'
+import { Alert, AppState, AppStateStatus, StatusBar, StyleSheet } from 'react-native'
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 import { Linking } from 'react-native'
 import Geolocation, { GeolocationResponse } from '@react-native-community/geolocation'
 import { PERMISSIONS, RESULTS, check } from 'react-native-permissions'
@@ -178,6 +179,7 @@ const App = () => {
   }, [])
 
   return (
+    <SafeAreaProvider>
     <SafeAreaView style={styles.container}>
       <StatusBar />
       <WebView
@@ -202,6 +204,7 @@ const App = () => {
         userAgent="Mozilla/5.0 (Linux; Android 10; SM-G975F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Mobile Safari/537.36"
       />
     </SafeAreaView>
+    </SafeAreaProvider>
   )
 }
 
