@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef } from 'react'
 import WebView, { WebViewMessageEvent } from 'react-native-webview'
-import { Alert, AppState, AppStateStatus, StatusBar, StyleSheet } from 'react-native'
+import { Alert, StatusBar, StyleSheet } from 'react-native'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
 import { Linking } from 'react-native'
 import Geolocation, { GeolocationResponse } from '@react-native-community/geolocation'
@@ -19,7 +19,6 @@ const url = Config.SOSO_WEB_URL || ''
 
 const App = () => {
   const webviewRef = useRef<WebView>(null)
-  const [appState, setAppState] = useState(AppState.currentState)
 
   const handleRequest = (webViewRequest: ShouldStartLoadRequest) => {
     const isExternal = !webViewRequest.url.startsWith(url)
@@ -164,18 +163,8 @@ const App = () => {
   }
 
   useEffect(() => {
-    const handleChange = (nextAppState: AppStateStatus) => {
-      if (appState.match(/inactive|background/) && nextAppState === 'active') {
-        webviewRef.current?.reload()
-      }
-      setAppState(nextAppState)
-    }
     initAmplitude()
     googleSigninConfigure()
-
-    const subscription = AppState.addEventListener('change', handleChange)
-
-    return () => subscription.remove()
   }, [])
 
   return (
