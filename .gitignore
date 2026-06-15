@@ -3,6 +3,7 @@
 .DS_Store
 
 .env
+.env.*
 
 # Xcode
 #
@@ -35,6 +36,8 @@ local.properties
 .cxx/
 *.keystore
 !debug.keystore
+keystore.properties
+google-services.json
 .kotlin/
 
 # node.js
